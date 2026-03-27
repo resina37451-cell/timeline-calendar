@@ -508,3 +508,19 @@
   background: #c0392b;
   color: #fff;
 }
+
+/* ── NOTE-SOURCED EVENTS ── */
+/* Dashed left border + slight opacity to distinguish from user events */
+.tl-ev.tl-ev-note {
+  border-left: 3px dashed rgba(255,255,255,0.7) !important;
+  opacity: 0.82;
+  cursor: pointer;
+}
+.tl-ev.tl-ev-note:hover {
+  opacity: 1;
+}
+
+/* ── MODAL: note row — time inputs fill their column ── */
+.tl-mrow input[type="time"] {
+  width: 100%;
+}

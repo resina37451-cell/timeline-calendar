@@ -5,82 +5,85 @@ const { Plugin, ItemView } = require('obsidian');
 const VIEW_TYPE = 'timeline-calendar';
 
 // ─── i18n ─────────────────────────────────────────────────────────────────
-// Detects Obsidian's language via window.moment.locale() (set by Obsidian).
-// Falls back to navigator.language. If locale starts with 'pt' → Portuguese.
-
 const STRINGS = {
   pt: {
-    title:        '📅 Timeline',
-    allDay:       'All day',
-    today:        'Hj',
-    week1:        '1sem',
-    week2:        '2sem',
-    month1:       'Mês',
-    month2:       '2 meses',
-    addBtn:       '+ Novo',
-    modalNew:     'Novo evento',
-    modalEdit:    'Editar evento',
-    fieldTitle:   'Título',
-    fieldDate:    'Data',
-    fieldAllDay:  'Dia todo',
-    fieldStart:   'Início',
-    fieldEnd:     'Fim',
-    fieldNotes:   'Notas',
-    fieldColor:   'Cor',
-    fieldDone:    'Concluído',
-    btnDelete:    'Excluir',
-    btnCancel:    'Cancelar',
-    btnCreate:    'Criar',
-    btnSave:      'Salvar',
-    placeholder:  'Nome do evento...',
-    tipAllDay:    '📅 Dia todo',
-    months:       ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
-    days:         ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],
-    ribbonTitle:  'Timeline Calendar',
-    commandName:  'Abrir Timeline Calendar',
-    viewTitle:    'Timeline',
+    title:           '📅 Timeline',
+    allDay:          'All day',
+    today:           'Hj',
+    week1:           '1sem',
+    week2:           '2sem',
+    month1:          'Mês',
+    month2:          '2 meses',
+    addBtn:          '+ Novo',
+    modalNew:        'Novo evento',
+    modalEdit:       'Editar evento',
+    fieldTitle:      'Título',
+    fieldDate:       'Data',
+    fieldAllDay:     'Dia todo',
+    fieldStart:      'Início',
+    fieldEnd:        'Fim',
+    fieldNotes:      'Notas',
+    fieldNoteLink:   'Nota vinculada',
+    fieldTags:       'Tags',
+    fieldColor:      'Cor',
+    fieldDone:       'Concluído',
+    btnDelete:       'Excluir',
+    btnCancel:       'Cancelar',
+    btnCreate:       'Criar',
+    btnSave:         'Salvar',
+    btnOpenNote:     'Abrir nota',
+    placeholder:     'Nome do evento...',
+    placeholderNote: 'pasta/nota.md',
+    placeholderTags: 'estudo, academia, trabalho',
+    tipAllDay:       '📅 Dia todo',
+    readonlyNotice:  '📄 Evento da nota (somente leitura)',
+    months:          ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
+    days:            ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'],
+    ribbonTitle:     'Timeline Calendar',
+    commandName:     'Abrir Timeline Calendar',
+    viewTitle:       'Timeline',
   },
   en: {
-    title:        '📅 Timeline',
-    allDay:       'All day',
-    today:        'Today',
-    week1:        '1wk',
-    week2:        '2wks',
-    month1:       'Month',
-    month2:       '2 months',
-    addBtn:       '+ New',
-    modalNew:     'New event',
-    modalEdit:    'Edit event',
-    fieldTitle:   'Title',
-    fieldDate:    'Date',
-    fieldAllDay:  'All day',
-    fieldStart:   'Start',
-    fieldEnd:     'End',
-    fieldNotes:   'Notes',
-    fieldColor:   'Color',
-    fieldDone:    'Done',
-    btnDelete:    'Delete',
-    btnCancel:    'Cancel',
-    btnCreate:    'Create',
-    btnSave:      'Save',
-    placeholder:  'Event name...',
-    tipAllDay:    '📅 All day',
-    months:       ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-    days:         ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
-    ribbonTitle:  'Timeline Calendar',
-    commandName:  'Open Timeline Calendar',
-    viewTitle:    'Timeline',
+    title:           '📅 Timeline',
+    allDay:          'All day',
+    today:           'Today',
+    week1:           '1wk',
+    week2:           '2wks',
+    month1:          'Month',
+    month2:          '2 months',
+    addBtn:          '+ New',
+    modalNew:        'New event',
+    modalEdit:       'Edit event',
+    fieldTitle:      'Title',
+    fieldDate:       'Date',
+    fieldAllDay:     'All day',
+    fieldStart:      'Start',
+    fieldEnd:        'End',
+    fieldNotes:      'Notes',
+    fieldNoteLink:   'Linked note',
+    fieldTags:       'Tags',
+    fieldColor:      'Color',
+    fieldDone:       'Done',
+    btnDelete:       'Delete',
+    btnCancel:       'Cancel',
+    btnCreate:       'Create',
+    btnSave:         'Save',
+    btnOpenNote:     'Open note',
+    placeholder:     'Event name...',
+    placeholderNote: 'folder/note.md',
+    placeholderTags: 'study, gym, work',
+    tipAllDay:       '📅 All day',
+    readonlyNotice:  '📄 Event from note (read-only)',
+    months:          ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    days:            ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+    ribbonTitle:     'Timeline Calendar',
+    commandName:     'Open Timeline Calendar',
+    viewTitle:       'Timeline',
   },
 };
 
-/**
- * Returns the locale string from Obsidian's bundled moment (most accurate)
- * or falls back to the browser navigator.language.
- * If it starts with 'pt', use Portuguese; otherwise English.
- */
 function detectLang() {
   try {
-    // Obsidian sets moment's locale to match its UI language.
     const loc = (typeof window !== 'undefined' && window.moment)
       ? window.moment.locale()
       : navigator.language;
@@ -107,7 +110,6 @@ const COL = { 1: 220, 7: 110, 14: 78, 30: 52, 60: 28 };
 function uid() { return Math.random().toString(36).slice(2, 9); }
 
 function addDays(d, n) {
-  // JS Date overflow automatically handles month boundaries & leap years
   const r = new Date(d);
   r.setDate(r.getDate() + n);
   return r;
@@ -126,16 +128,10 @@ function dayOff(n) {
 }
 
 function fmtShort(k, months) {
-  // Use T12:00 to avoid DST edge cases
   const d = new Date(k + 'T12:00');
   return `${d.getDate()} ${months[d.getMonth()]}`;
 }
 
-/**
- * Slot labels (language-independent — always numeric):
- *   slot  0 → "5:00-5:30"
- *   slot 35 → "22:30-23:00"
- */
 function slotLabel(i) {
   const mS = START_H * 60 + i * SLOT_MINS;
   const mE = mS + SLOT_MINS;
@@ -162,27 +158,37 @@ class TimelineView extends ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.plugin = plugin;
-    this.state  = { zoom: 14, offset: 0, events: [] };
-    this._tip        = null;
-    this._navEl      = null;
-    this._periodEl   = null;
+    this.state  = {
+      zoom:       14,
+      offset:     0,
+      events:     [],    // user-created events (persisted)
+      noteEvents: [],    // auto-detected from notes (never persisted)
+    };
+    this._tip         = null;
+    this._navEl       = null;
+    this._periodEl    = null;
     this._gutterSlots = null;
-    this._scroll     = null;
-    this._lang       = 'en'; // resolved in onOpen
+    this._scroll      = null;
+    this._lang        = 'en';
+    this._vaultRefs   = [];
   }
 
   getViewType()    { return VIEW_TYPE; }
   getDisplayText() { return this._t ? this._t.viewTitle : 'Timeline'; }
   getIcon()        { return 'calendar-days'; }
 
-  /** Shorthand: translate key */
   get _t() { return STRINGS[this._lang]; }
 
+  // Returns all events (user-created + note-detected) for rendering
+  _allEvents() {
+    return [...this.state.events, ...this.state.noteEvents];
+  }
+
   async onOpen() {
-    // Resolve language once when the view opens
     this._lang = detectLang();
 
     await this._loadData();
+    await this._loadNoteEvents();
 
     const container = this.containerEl.children[1];
     container.empty();
@@ -194,10 +200,14 @@ class TimelineView extends ItemView {
     this._buildBody();
     this._tip = this.root.createDiv({ cls: 'tl-tip' });
 
+    this._registerVaultListeners();
     this.render();
   }
 
-  async onClose() { await this._saveData(); }
+  async onClose() {
+    this._unregisterVaultListeners();
+    await this._saveData();
+  }
 
   // ── persistence ─────────────────────────────────────────────────────────
 
@@ -211,18 +221,105 @@ class TimelineView extends ItemView {
   }
 
   async _saveData() {
+    // Only persist user-created events; note events are always re-parsed
     await this.plugin.saveData({ events: this.state.events });
   }
 
   _sampleEvents() {
     return [
-      { id: 'a', date: dayOff(0),  allDay: false, startTime: '09:00', endTime: '10:00', title: this._lang === 'pt' ? 'Reunião equipe'   : 'Team meeting',      color: '#4a7fe8', notes: 'Stand-up', done: false },
-      { id: 'b', date: dayOff(1),  allDay: false, startTime: '14:00', endTime: '15:30', title: this._lang === 'pt' ? 'Apresentação Q2'  : 'Q2 Presentation',   color: '#e05c5c', notes: '',          done: false },
-      { id: 'c', date: dayOff(-1), allDay: false, startTime: '08:00', endTime: '08:30', title: this._lang === 'pt' ? 'Academia'         : 'Gym',               color: '#3aaa6e', notes: '',          done: true  },
-      { id: 'd', date: dayOff(3),  allDay: true,                                        title: this._lang === 'pt' ? 'Feriado'          : 'Holiday',           color: '#c9722b', notes: '',          done: false },
-      { id: 'e', date: dayOff(0),  allDay: false, startTime: '11:00', endTime: '12:00', title: this._lang === 'pt' ? 'Almoço cliente'   : 'Client lunch',      color: '#7c5cbf', notes: '',          done: false },
-      { id: 'f', date: dayOff(5),  allDay: false, startTime: '15:00', endTime: '16:00', title: this._lang === 'pt' ? 'Dentista'         : 'Dentist',           color: '#2bbfc9', notes: '',          done: false },
+      { id: 'a', date: dayOff(0),  allDay: false, startTime: '09:00', endTime: '10:00', title: this._lang === 'pt' ? 'Reunião equipe'   : 'Team meeting',    color: '#4a7fe8', notes: 'Stand-up', done: false, noteLink: '', tags: '' },
+      { id: 'b', date: dayOff(1),  allDay: false, startTime: '14:00', endTime: '15:30', title: this._lang === 'pt' ? 'Apresentação Q2'  : 'Q2 Presentation', color: '#e05c5c', notes: '',          done: false, noteLink: '', tags: '' },
+      { id: 'c', date: dayOff(-1), allDay: false, startTime: '08:00', endTime: '08:30', title: this._lang === 'pt' ? 'Academia'         : 'Gym',             color: '#3aaa6e', notes: '',          done: true,  noteLink: '', tags: '' },
+      { id: 'd', date: dayOff(3),  allDay: true,                                        title: this._lang === 'pt' ? 'Feriado'          : 'Holiday',         color: '#c9722b', notes: '',          done: false, noteLink: '', tags: '' },
+      { id: 'e', date: dayOff(0),  allDay: false, startTime: '11:00', endTime: '12:00', title: this._lang === 'pt' ? 'Almoço cliente'   : 'Client lunch',    color: '#7c5cbf', notes: '',          done: false, noteLink: '', tags: '' },
+      { id: 'f', date: dayOff(5),  allDay: false, startTime: '15:00', endTime: '16:00', title: this._lang === 'pt' ? 'Dentista'         : 'Dentist',         color: '#2bbfc9', notes: '',          done: false, noteLink: '', tags: '' },
     ];
+  }
+
+  // ── note event scanning ──────────────────────────────────────────────────
+
+  /**
+   * Scans all markdown files in the vault.
+   * Files whose base name contains YYYY-MM-DD are parsed for time events.
+   * Pattern matched per line: optional bullet/checkbox, then H:MM or HH:MM, then title.
+   * Example: "09:00 Study English" → event at 09:00 titled "Study English".
+   */
+  async _loadNoteEvents() {
+    this.state.noteEvents = [];
+    const vault = this.plugin.app.vault;
+    const files = vault.getMarkdownFiles();
+
+    for (const file of files) {
+      const match = file.basename.match(/(\d{4}-\d{2}-\d{2})/);
+      if (!match) continue;
+      const dateStr = match[1];
+
+      try {
+        const content = await vault.read(file);
+        const evs     = this._parseNoteEvents(file.path, dateStr, content);
+        this.state.noteEvents.push(...evs);
+      } catch (_) {
+        // Skip unreadable files silently
+      }
+    }
+  }
+
+  _parseNoteEvents(filePath, dateStr, content) {
+    const evs   = [];
+    // Matches optional list markers/checkboxes, then H:MM or HH:MM, then any title text
+    const re    = /^(?:[-*+]\s+(?:\[.\]\s+)?)?(\d{1,2}):(\d{2})\s+(.+)$/;
+    const lines = content.split('\n');
+
+    lines.forEach(raw => {
+      const m = raw.trim().match(re);
+      if (!m) return;
+      const h   = parseInt(m[1], 10);
+      const min = parseInt(m[2], 10);
+      if (h < START_H || h >= END_H) return;
+      const title = m[3].trim();
+      if (!title) return;
+
+      const startTime = `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+      evs.push({
+        id:          `note::${filePath}::${startTime}`,
+        date:        dateStr,
+        allDay:      false,
+        startTime,
+        endTime:     '',
+        title,
+        color:       '#888888',
+        notes:       '',
+        done:        false,
+        tags:        '',
+        noteLink:    '',
+        _source:     'note',
+        _sourcePath: filePath,
+      });
+    });
+
+    return evs;
+  }
+
+  // ── vault listeners ──────────────────────────────────────────────────────
+
+  _registerVaultListeners() {
+    const vault   = this.plugin.app.vault;
+    const refresh = async () => {
+      await this._loadNoteEvents();
+      this.render();
+    };
+    this._vaultRefs = [
+      vault.on('modify', refresh),
+      vault.on('create', refresh),
+      vault.on('delete', refresh),
+      vault.on('rename', refresh),
+    ];
+  }
+
+  _unregisterVaultListeners() {
+    const vault = this.plugin.app.vault;
+    this._vaultRefs.forEach(ref => vault.offref(ref));
+    this._vaultRefs = [];
   }
 
   // ── toolbar ──────────────────────────────────────────────────────────────
@@ -272,8 +369,8 @@ class TimelineView extends ItemView {
     gutter.createDiv({ cls: 'tl-gutter-corner' });
     gutter.createDiv({ cls: 'tl-gutter-allday', text: this._t.allDay });
 
-    const gutterMask    = gutter.createDiv({ cls: 'tl-gutter-scroll-mask' });
-    this._gutterSlots   = gutterMask.createDiv({ cls: 'tl-gutter-slots' });
+    const gutterMask  = gutter.createDiv({ cls: 'tl-gutter-scroll-mask' });
+    this._gutterSlots = gutterMask.createDiv({ cls: 'tl-gutter-slots' });
     this._gutterSlots.style.height = (TOTAL * SH) + 'px';
 
     for (let i = 0; i < TOTAL; i++) {
@@ -340,7 +437,7 @@ class TimelineView extends ItemView {
       col.onclick = () => this.openModal(null, key, true);
     }
 
-    // ── All-day row ──
+    // ── All-day row (user events only — note events are never all-day) ──
     const adr = scroll.createDiv({ cls: 'tl-allday-row' });
     adr.style.minWidth = tw + 'px';
 
@@ -362,7 +459,7 @@ class TimelineView extends ItemView {
         });
     }
 
-    // ── Time grid ──
+    // ── Time grid (user events + note events combined) ──
     const grid = scroll.createDiv({ cls: 'tl-grid' });
     grid.style.minWidth = tw + 'px';
 
@@ -384,7 +481,8 @@ class TimelineView extends ItemView {
         slot.onclick = (si => () => this.openModal(null, key, false, si))(s);
       }
 
-      this.state.events
+      // Render all events for this day (user + note)
+      this._allEvents()
         .filter(ev => !ev.allDay && ev.date === key)
         .forEach(ev => this._renderEv(col, ev));
 
@@ -402,7 +500,7 @@ class TimelineView extends ItemView {
       scroll.scrollTop = savedTop;
     } else {
       requestAnimationFrame(() => {
-        scroll.scrollTop = ((7 - START_H) * 60 / SLOT_MINS) * SH; // start at 07:00
+        scroll.scrollTop = ((7 - START_H) * 60 / SLOT_MINS) * SH;
         this._syncGutter();
       });
     }
@@ -437,7 +535,12 @@ class TimelineView extends ItemView {
     const dur = Math.max(1, es - ss);
     if (ss < 0 || ss >= TOTAL) return;
 
-    const el = col.createDiv({ cls: 'tl-ev' + (ev.done ? ' done' : '') });
+    const isNote = ev._source === 'note';
+
+    // Note events get a special CSS class and dashed left border
+    const el = col.createDiv({
+      cls: 'tl-ev' + (ev.done ? ' done' : '') + (isNote ? ' tl-ev-note' : ''),
+    });
     el.style.top        = (ss * SH + 1) + 'px';
     el.style.height     = (dur * SH - 2) + 'px';
     el.style.background = ev.color;
@@ -445,11 +548,22 @@ class TimelineView extends ItemView {
     el.createDiv({ cls: 'tl-ev-title', text: ev.title });
     if (ev.startTime) {
       el.createDiv({
-        cls: 'tl-ev-time',
+        cls:  'tl-ev-time',
         text: ev.startTime + (ev.endTime ? ' – ' + ev.endTime : ''),
       });
     }
-    el.onclick      = () => this.openModal(ev);
+
+    // Click behaviour:
+    //   • Note-sourced events → open the source note (read-only)
+    //   • User events → open edit modal (existing behaviour preserved)
+    el.onclick = () => {
+      if (isNote) {
+        this.plugin.app.workspace.openLinkText(ev._sourcePath, '', false);
+      } else {
+        this.openModal(ev);
+      }
+    };
+
     el.onmouseenter = e => this._showTip(e, ev);
     el.onmouseleave = () => this._hideTip();
   }
@@ -460,12 +574,21 @@ class TimelineView extends ItemView {
     const tip = this._tip;
     if (!tip || !this.root) return;
     tip.style.display = 'block';
-    const meta = ev.allDay
+
+    const isNote = ev._source === 'note';
+    const meta   = ev.allDay
       ? this._t.tipAllDay
       : `⏰ ${ev.startTime || ''}${ev.endTime ? ' – ' + ev.endTime : ''}`;
+
+    let extra = ev.notes   ? `\n📝 ${ev.notes}` : '';
+    if (ev.tags && ev.tags.trim())     extra += `\n🏷 ${ev.tags.trim()}`;
+    if (ev.noteLink && ev.noteLink.trim()) extra += `\n🔗 ${ev.noteLink.trim()}`;
+    if (isNote) extra += `\n${this._t.readonlyNotice}`;
+
     tip.innerHTML =
       `<div class="tl-tip-title">${ev.title}</div>` +
-      `<div class="tl-tip-meta">${meta}${ev.notes ? '\n📝 ' + ev.notes : ''}</div>`;
+      `<div class="tl-tip-meta">${meta}${extra}</div>`;
+
     const rect = this.root.getBoundingClientRect();
     tip.style.left = Math.min(e.clientX - rect.left + 10, rect.width - 230) + 'px';
     tip.style.top  = Math.max(4, e.clientY - rect.top - 60) + 'px';
@@ -478,54 +601,66 @@ class TimelineView extends ItemView {
   openModal(ev, defDate, defAllDay = false, defSlot = null) {
     const t    = this._t;
     const isNew = !ev;
-    const ds   = defSlot != null ? slotToTime(defSlot)  : '09:00';
-    const de   = defSlot != null ? slotEndTime(defSlot) : '09:30';
-    const d    = ev
+
+    // Note-source events are read-only: clicking opens the source note instead
+    if (ev && ev._source === 'note') {
+      this.plugin.app.workspace.openLinkText(ev._sourcePath, '', false);
+      return;
+    }
+
+    const ds = defSlot != null ? slotToTime(defSlot)  : '09:00';
+    const de = defSlot != null ? slotEndTime(defSlot) : '09:30';
+    const d  = ev
       ? { ...ev }
       : { id: uid(), title: '', date: defDate || dayOff(0), allDay: defAllDay,
-          startTime: ds, endTime: de, color: COLORS[0], notes: '', done: false };
+          startTime: ds, endTime: de, color: COLORS[0], notes: '', done: false,
+          noteLink: '', tags: '' };
+
+    // Ensure new fields exist on old saved events
+    if (d.noteLink === undefined) d.noteLink = '';
+    if (d.tags     === undefined) d.tags     = '';
 
     let selColor = d.color || COLORS[0];
 
     this.root.querySelector('.tl-overlay')?.remove();
 
-    const ov    = this.root.createDiv({ cls: 'tl-overlay open' });
-    ov.onclick  = e => { if (e.target === ov) ov.remove(); };
+    const ov   = this.root.createDiv({ cls: 'tl-overlay open' });
+    ov.onclick = e => { if (e.target === ov) ov.remove(); };
 
     const modal = ov.createDiv({ cls: 'tl-modal' });
     modal.onclick = e => e.stopPropagation();
 
     modal.createEl('h3', { text: isNew ? t.modalNew : t.modalEdit });
 
-    // Title
+    // ── Title ──
     const mfTitle = modal.createDiv({ cls: 'tl-mf' });
     mfTitle.createEl('label', { text: t.fieldTitle });
     const inputTitle = mfTitle.createEl('input', { type: 'text', placeholder: t.placeholder });
     inputTitle.value = d.title;
 
-    // Date
+    // ── Date ──
     const mfDate = modal.createDiv({ cls: 'tl-mf' });
     mfDate.createEl('label', { text: t.fieldDate });
     const inputDate = mfDate.createEl('input', { type: 'date' });
     inputDate.value = d.date;
 
-    // All-day
+    // ── All-day ──
     const mfAllDay  = modal.createDiv({ cls: 'tl-mf' });
     const lblAD     = mfAllDay.createEl('label');
     const chkAllDay = lblAD.createEl('input', { type: 'checkbox' });
     chkAllDay.checked = !!d.allDay;
     lblAD.appendText(' ' + t.fieldAllDay);
 
-    // Time row
+    // ── Time row ──
     const timeRow = modal.createDiv({ cls: 'tl-mrow' });
     if (d.allDay) timeRow.style.display = 'none';
 
-    const mfStart   = timeRow.createDiv({ cls: 'tl-mf' });
+    const mfStart    = timeRow.createDiv({ cls: 'tl-mf' });
     mfStart.createEl('label', { text: t.fieldStart });
     const inputStart = mfStart.createEl('input', { type: 'time' });
     inputStart.value = d.startTime || '';
 
-    const mfEnd   = timeRow.createDiv({ cls: 'tl-mf' });
+    const mfEnd    = timeRow.createDiv({ cls: 'tl-mf' });
     mfEnd.createEl('label', { text: t.fieldEnd });
     const inputEnd = mfEnd.createEl('input', { type: 'time' });
     inputEnd.value = d.endTime || '';
@@ -535,14 +670,43 @@ class TimelineView extends ItemView {
       d.allDay = this.checked;
     };
 
-    // Notes
-    const mfNotes   = modal.createDiv({ cls: 'tl-mf' });
+    // ── Notes ──
+    const mfNotes    = modal.createDiv({ cls: 'tl-mf' });
     mfNotes.createEl('label', { text: t.fieldNotes });
     const inputNotes = mfNotes.createEl('textarea');
     inputNotes.rows  = 2;
     inputNotes.value = d.notes || '';
 
-    // Color swatches
+    // ── Linked note (NEW) ──
+    const mfNote    = modal.createDiv({ cls: 'tl-mf' });
+    mfNote.createEl('label', { text: t.fieldNoteLink });
+    const noteRow   = mfNote.createDiv({ cls: 'tl-mrow' });
+    noteRow.style.gap = '6px';
+
+    const inputNote = noteRow.createEl('input', { type: 'text', placeholder: t.placeholderNote });
+    inputNote.value = d.noteLink || '';
+    inputNote.style.flex = '1';
+
+    // "Open note" button — only shown when there is already a linked note
+    const openNoteBtn = noteRow.createEl('button', { cls: 'tl-mbtn secondary', text: t.btnOpenNote });
+    openNoteBtn.style.display = d.noteLink && d.noteLink.trim() ? 'inline-flex' : 'none';
+    openNoteBtn.onclick = e => {
+      e.preventDefault();
+      const path = inputNote.value.trim();
+      if (path) this.plugin.app.workspace.openLinkText(path, '', false);
+    };
+
+    inputNote.oninput = () => {
+      openNoteBtn.style.display = inputNote.value.trim() ? 'inline-flex' : 'none';
+    };
+
+    // ── Tags (NEW) ──
+    const mfTags    = modal.createDiv({ cls: 'tl-mf' });
+    mfTags.createEl('label', { text: t.fieldTags });
+    const inputTags = mfTags.createEl('input', { type: 'text', placeholder: t.placeholderTags });
+    inputTags.value = d.tags || '';
+
+    // ── Color swatches ──
     const mfColor = modal.createDiv({ cls: 'tl-mf' });
     mfColor.createEl('label', { text: t.fieldColor });
     const crow = mfColor.createDiv({ cls: 'tl-crow' });
@@ -556,7 +720,7 @@ class TimelineView extends ItemView {
       };
     });
 
-    // Done (edit only)
+    // ── Done (edit only) ──
     let chkDone = null;
     if (!isNew) {
       const mfDone  = modal.createDiv({ cls: 'tl-mf' });
@@ -566,7 +730,7 @@ class TimelineView extends ItemView {
       lblDone.appendText(' ' + t.fieldDone);
     }
 
-    // Buttons
+    // ── Buttons ──
     const mact = modal.createDiv({ cls: 'tl-mact' });
 
     if (!isNew) {
@@ -583,7 +747,7 @@ class TimelineView extends ItemView {
     cancelBtn.onclick = () => ov.remove();
 
     const saveBtn = mact.createEl('button', {
-      cls: 'tl-mbtn primary',
+      cls:  'tl-mbtn primary',
       text: isNew ? t.btnCreate : t.btnSave,
     });
     saveBtn.onclick = () => {
@@ -596,6 +760,8 @@ class TimelineView extends ItemView {
       d.startTime = inputStart.value || '';
       d.endTime   = inputEnd.value   || '';
       d.notes     = inputNotes.value;
+      d.noteLink  = inputNote.value.trim();
+      d.tags      = inputTags.value.trim();
       d.color     = selColor;
       if (!isNew && chkDone) d.done = chkDone.checked;
 
@@ -621,7 +787,6 @@ class TimelinePlugin extends Plugin {
   async onload() {
     this.registerView(VIEW_TYPE, (leaf) => new TimelineView(leaf, this));
 
-    // Ribbon icon and command labels also adapt to language
     const lang = detectLang();
     const t    = STRINGS[lang];
 
